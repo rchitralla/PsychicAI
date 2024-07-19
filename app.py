@@ -8,8 +8,8 @@ if not openai_api_key:
     st.error('OPENAI_API_KEY environment variable is not set')
     st.stop()
 
-# Instantiate the OpenAI client
-client = openai.OpenAI(api_key=openai_api_key)
+# Set the OpenAI API key
+openai.api_key = openai_api_key
 
 def generate_john_response(user_input):
     messages = [
@@ -17,7 +17,7 @@ def generate_john_response(user_input):
         {"role": "user", "content": user_input}
     ]
 
-    response = client.chat_completions.create(
+    response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=messages,
         max_tokens=150,
