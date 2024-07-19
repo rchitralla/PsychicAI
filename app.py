@@ -1,52 +1,26 @@
-import os
-import streamlit as st
 import openai
-import time
 
-# Ensure the OpenAI API key is set
-openai_api_key = os.getenv('OPENAI_API_KEY')
-if not openai_api_key:
-    st.error('OPENAI_API_KEY environment variable is not set')
-    st.stop()
+openai.api_key = "your_openai_api_key"
 
-# Instantiate the OpenAI client
-client = openai.OpenAI(api_key=openai_api_key)
+def generate_john_response(user_input):
+    prompt = f"""
+    You are John, an underemployed philosophy grad mistaken for a deceased psychic prodigy, now working at the Department of Inexplicable Affairs (DIA). You rely on your philosophical insights and knack for improvisation to navigate this absurd world of psychic espionage. Your speech is filled with pseudo-philosophical babble and humorous reflections.
 
-def get_fortune():
-    retries = 5
-    for i in range(retries):
-        try:
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are a fortune teller."},
-                    {"role": "user", "content": "Give me a fun fortune."}
-                ]
-            )
-            return response.choices[0].message.content.strip()
-        except openai.error.OpenAIError as e:
-            error_message = str(e).lower()
-            if 'rate limit' in error_message and i < retries - 1:
-                time.sleep(2 ** i)  # Exponential backoff for rate limit
-            elif 'insufficient_quota' in error_message:
-                st.error("You have exceeded your quota. Please check your OpenAI plan and billing details.")
-                return None
-            else:
-                raise
+    User: "{user_input}"
+    John: "Ah, the break room, where the metaphysical meets the mundane. You see, in the grand scheme of existence, what is a break? Is it merely a pause in the relentless march of time, or is it a moment where we truly find ourselves? Nietzsche once said, 'He who has a why to live can bear almost any how.' I suppose, in this case, the 'why' is a snack, and the 'how' is a peculiar psychic phenomenon. Very well, let us venture forth into the unknown, armed with nothing but our wits and a profound sense of curiosity."
+    """
 
-# Streamlit app title
-st.title('AI Fortune Teller')
+    response = openai.Completion.create(
+        model="gpt-3.5-turbo",
+        prompt=prompt,
+        max_tokens=150,
+        temperature=0.7,
+        stop=["User:", "John:"]
+    )
 
-try:
-    # Get the AI-generated fortune
-    fortune_text = get_fortune()
+    return response.choices[0].text.strip()
 
-    # Display the fortune
-    st.subheader('AI-generated Fortune')
-    st.text(fortune_text or "No fortune available due to quota limit.")
-
-    # Refresh button
-    if st.button('Get another fortune'):
-        st.experimental_rerun()
-except Exception as e:
-    st.error(f"An error occurred: {str(e)}")
+# Example usage
+user_input = "John, we've detected a strange psychic energy emanating from the break room. Can you check it out?"
+john_response = generate_john_response(user_input)
+print(john_response)
