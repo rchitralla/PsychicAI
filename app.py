@@ -23,7 +23,8 @@ def generate_john_response(user_input):
         messages=messages
     )
 
-    print response.choices[0].text
+    return response.choices[0].text
+    print(response)
 
 # Streamlit app
 st.title('AI Psychic Fortune Teller')
