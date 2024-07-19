@@ -17,16 +17,12 @@ def generate_john_response(user_input):
         {"role": "user", "content": user_input}
     ]
 
-    response = openai.Completion.create(
+    response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        prompt=f"You are John, an underemployed philosophy grad mistaken for a deceased psychic prodigy, now working at the Department of Inexplicable Affairs (DIA). You rely on your philosophical insights and knack for improvisation to navigate this absurd world of psychic espionage. Your speech is filled with pseudo-philosophical babble and humorous reflections.\n\nUser: {user_input}\nJohn:",
-        max_tokens=150,
-        n=1,
-        stop=None,
-        temperature=0.7,
+        messages=messages
     )
 
-    return response.choices[0].text.strip()
+    return response.choices[0].message['content'].strip()
 
 # Streamlit app
 st.title('AI Psychic Fortune Teller')
