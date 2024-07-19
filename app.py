@@ -9,7 +9,9 @@ if not openai_api_key:
     st.stop()
 
 # Set the OpenAI API key
-openai.api_key = openai_api_key
+client = OpenAI(
+    api_key = openai_api_key,
+)
 
 def generate_john_response(user_input):
     messages = [
