@@ -24,7 +24,6 @@ def generate_john_response(user_input):
     )
     
     return response.choices[0].message.content.strip()
-    print(response)
 
 
 # Streamlit app
