@@ -1,22 +1,24 @@
 import os
 import streamlit as st
 import subprocess
-from openai import OpenAI
+import openai
 
-# Set your OpenAI API key here
+# Ensure the OpenAI API key is set
 openai_api_key = os.getenv('OPENAI_API_KEY')
 if not openai_api_key:
     st.error('OPENAI_API_KEY environment variable is not set')
     st.stop()
 
-client = OpenAI(api_key=openai_api_key)
+# Initialize the OpenAI client
+openai.api_key = openai_api_key
 
 def get_fortune():
-    response = client.chat.completions.create(
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",  # or the latest model available
         messages=[
             {"role": "user", "content": "Give me a fun fortune."}
         ],
-        model="gpt-3.5-turbo",
+        max_tokens=50
     )
     return response['choices'][0]['message']['content'].strip()
 
