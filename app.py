@@ -22,8 +22,9 @@ def generate_john_response(user_input):
         model="gpt-3.5-turbo",
         messages=messages
     )
-    print(response)
+    
     return response.choices[0].text
+    print(response)
 
 
 # Streamlit app
