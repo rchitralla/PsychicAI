@@ -1,6 +1,5 @@
 import os
 import streamlit as st
-import subprocess
 import openai
 import time
 
@@ -12,13 +11,6 @@ if not openai_api_key:
 
 # Instantiate the OpenAI client
 client = openai.OpenAI(api_key=openai_api_key)
-
-def check_command(cmd):
-    try:
-        result = subprocess.run([cmd, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return result.stdout.decode('utf-8') or result.stderr.decode('utf-8')
-    except Exception as e:
-        return str(e)
 
 def get_fortune():
     retries = 5
@@ -42,37 +34,16 @@ def get_fortune():
             else:
                 raise
 
-def get_lolcat_fortune(fortune_text):
-    if fortune_text is None:
-        return "No fortune available due to quota limit."
-    result = subprocess.run(['lolcat'], input=fortune_text.encode('utf-8'), stdout=subprocess.PIPE)
-    return result.stdout.decode('utf-8')
-
 # Streamlit app title
-st.title('AI Lolcat Fortune')
-
-# Debugging commands to check if lolcat and fortune are installed
-lolcat_version = check_command('lolcat')
-fortune_version = check_command('fortune')
-
-st.write("`lolcat` version check output:")
-st.code(lolcat_version)
-
-st.write("`fortune` version check output:")
-st.code(fortune_version)
+st.title('AI Fortune Teller')
 
 try:
-    # Get the AI-generated fortune and lolcat fortune
+    # Get the AI-generated fortune
     fortune_text = get_fortune()
-    lolcat_fortune = get_lolcat_fortune(fortune_text)
 
-    # Display the original fortune
+    # Display the fortune
     st.subheader('AI-generated Fortune')
     st.text(fortune_text or "No fortune available due to quota limit.")
-
-    # Display the lolcat fortune
-    st.subheader('Lolcat Fortune')
-    st.code(lolcat_fortune)
 
     # Refresh button
     if st.button('Get another fortune'):
