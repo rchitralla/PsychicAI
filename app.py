@@ -16,6 +16,7 @@ def get_fortune():
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",  # or the latest model available
         messages=[
+            {"role": "system", "content": "You are a fortune teller."},
             {"role": "user", "content": "Give me a fun fortune."}
         ],
         max_tokens=50
@@ -39,8 +40,4 @@ st.text(fortune_text)
 
 # Display the lolcat fortune
 st.subheader('Lolcat Fortune')
-st.code(lolcat_fortune, language='')
-
-# Refresh button
-if st.button('Get another fortune'):
-    st.experimental_rerun()
+st.code(lolcat_fortune, language='
