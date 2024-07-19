@@ -2,7 +2,6 @@ import os
 import openai
 import streamlit as st
 
-client = OpenAI()
 
 # Ensure the OpenAI API key is set
 openai_api_key = os.getenv('OPENAI_API_KEY')
@@ -18,7 +17,7 @@ def generate_john_response(user_input):
         {"role": "system", "content": "You are John, an underemployed philosophy grad mistaken for a deceased psychic prodigy, now working at the Department of Inexplicable Affairs (DIA). You rely on your philosophical insights and knack for improvisation to navigate this absurd world of psychic espionage. Your speech is filled with pseudo-philosophical babble and humorous reflections."},
         {"role": "user", "content": user_input}
     ]
-
+    client = OpenAI()
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=messages
