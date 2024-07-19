@@ -25,13 +25,19 @@ def get_fortune():
                 ]
             )
             return response.choices[0].message.content.strip()
-        except Exception as e:
-            if 'rate limit' in str(e).lower() and i < retries - 1:
-                time.sleep(2 ** i)  # Exponential backoff
+        except openai.error.OpenAIError as e:
+            error_message = str(e).lower()
+            if 'rate limit' in error_message and i < retries - 1:
+                time.sleep(2 ** i)  # Exponential backoff for rate limit
+            elif 'insufficient_quota' in error_message:
+                st.error("You have exceeded your quota. Please check your OpenAI plan and billing details.")
+                return None
             else:
                 raise
 
 def get_lolcat_fortune(fortune_text):
+    if fortune_text is None:
+        return "No fortune available due to quota limit."
     result = subprocess.run(['lolcat'], input=fortune_text.encode('utf-8'), stdout=subprocess.PIPE)
     return result.stdout.decode('utf-8')
 
@@ -45,7 +51,7 @@ try:
 
     # Display the original fortune
     st.subheader('AI-generated Fortune')
-    st.text(fortune_text)
+    st.text(fortune_text or "No fortune available due to quota limit.")
 
     # Display the lolcat fortune
     st.subheader('Lolcat Fortune')
