@@ -18,7 +18,7 @@ def generate_john_response(user_input):
         {"role": "user", "content": user_input}
     ]
     client = OpenAI()
-    response = client.chat.copletions.create(
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=messages
     )
