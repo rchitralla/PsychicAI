@@ -2,7 +2,6 @@ import os
 import openai
 import streamlit as st
 
-client = OpenAI()
 # Ensure the OpenAI API key is set
 openai_api_key = os.getenv('OPENAI_API_KEY')
 if not openai_api_key:
