@@ -40,4 +40,8 @@ st.text(fortune_text)
 
 # Display the lolcat fortune
 st.subheader('Lolcat Fortune')
-st.code(lolcat_fortune, language='
+st.code(lolcat_fortune, language='')
+
+# Refresh button
+if st.button('Get another fortune'):
+    st.experimental_rerun()
