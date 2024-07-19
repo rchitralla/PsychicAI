@@ -22,9 +22,9 @@ def generate_john_response(user_input):
         model="gpt-3.5-turbo",
         messages=messages
     )
-
-    return response.choices[0].text
     print(response)
+    return response.choices[0].text
+
 
 # Streamlit app
 st.title('AI Psychic Fortune Teller')
