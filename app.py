@@ -17,10 +17,13 @@ def generate_john_response(user_input):
         {"role": "user", "content": user_input}
     ]
 
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=messages
-    )
+    response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a fortune teller."},
+                    {"role": "user", "content": "Give me a fun fortune."}
+                ]
+            )
 
     return response.choices[0].message['content'].strip()
 
