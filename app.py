@@ -9,17 +9,16 @@ if not openai_api_key:
     st.error('OPENAI_API_KEY environment variable is not set')
     st.stop()
 
-# Initialize the OpenAI client
+# Set the OpenAI API key
 openai.api_key = openai_api_key
 
 def get_fortune():
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",  # or the latest model available
+        model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a fortune teller."},
             {"role": "user", "content": "Give me a fun fortune."}
-        ],
-        max_tokens=50
+        ]
     )
     return response['choices'][0]['message']['content'].strip()
 
@@ -40,7 +39,7 @@ st.text(fortune_text)
 
 # Display the lolcat fortune
 st.subheader('Lolcat Fortune')
-st.code(lolcat_fortune, language='')
+st.code(lolcat_fortune)
 
 # Refresh button
 if st.button('Get another fortune'):
