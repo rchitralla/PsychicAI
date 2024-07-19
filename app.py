@@ -19,9 +19,7 @@ def generate_john_response(user_input):
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=messages,
-        max_tokens=150,
-        temperature=0.7
+        messages=messages
     )
 
     return response.choices[0].message['content'].strip()
