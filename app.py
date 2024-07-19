@@ -13,14 +13,12 @@ if not openai_api_key:
 openai.api_key = openai_api_key
 
 def get_fortune():
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a fortune teller."},
-            {"role": "user", "content": "Give me a fun fortune."}
-        ]
+    response = openai.Completion.create(
+        engine="text-davinci-003",  # Use the appropriate engine
+        prompt="You are a fortune teller. Give me a fun fortune.",
+        max_tokens=50
     )
-    return response['choices'][0]['message']['content'].strip()
+    return response['choices'][0]['text'].strip()
 
 def get_lolcat_fortune(fortune_text):
     result = subprocess.run(['lolcat'], input=fortune_text.encode('utf-8'), stdout=subprocess.PIPE)
