@@ -3,7 +3,7 @@ import streamlit as st
 import subprocess
 import openai
 import time
-from openai.error import RateLimitError
+from openai.error import OpenAIError
 
 # Ensure the OpenAI API key is set
 openai_api_key = os.getenv('OPENAI_API_KEY')
@@ -26,8 +26,8 @@ def get_fortune():
                 ]
             )
             return response.choices[0].message.content.strip()
-        except RateLimitError:
-            if i < retries - 1:
+        except OpenAIError as e:
+            if 'rate limit' in str(e).lower() and i < retries - 1:
                 time.sleep(2 ** i)  # Exponential backoff
             else:
                 raise
@@ -55,5 +55,5 @@ try:
     # Refresh button
     if st.button('Get another fortune'):
         st.experimental_rerun()
-except RateLimitError:
-    st.error("Rate limit exceeded. Please try again later.")
+except OpenAIError as e:
+    st.error(f"An error occurred: {str(e)}")
