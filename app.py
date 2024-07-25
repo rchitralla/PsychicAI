@@ -27,7 +27,7 @@ def generate_john_response(user_input):
 
 
 # Streamlit app
-st.title('AI Psychic Fortune Teller')
+st.title('Project Stargate: AI Psychic Fortune Teller')
 
 # Get user input
 user_input = st.text_input("Ask John for help:")
