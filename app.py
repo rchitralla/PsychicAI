@@ -35,23 +35,23 @@ documents = [
 ]
 
 # Encode the documents and add them to the FAISS index
-document_embeddings = model.encode(documents, convert_to_tensor=True)
-index.add(document_embeddings.cpu().detach().numpy())
+document_embeddings = model.encode(documents, convert_to_tensor=True).cpu().detach().numpy()
+index.add(document_embeddings)
 
 # Save the FAISS index
 faiss.write_index(index, index_file)
 
 def search_documents(query):
-    query_embedding = model.encode([query], convert_to_tensor=True)
-    D, I = index.search(query_embedding.cpu().detach().numpy(), k=3)
+    query_embedding = model.encode([query], convert_to_tensor=True).cpu().detach().numpy()
+    D, I = index.search(query_embedding, k=3)
     
     st.write(f"Search distances: {D}")
     st.write(f"Search indices: {I}")
     
-    # Check if the results are valid
-    if len(I) == 0 or len(I[0]) == 0 or I[0][0] == -1:
-        return []
-    return [documents[i] for i in I[0] if i != -1]
+    # Validate indices to ensure they are within the range of the documents list
+    valid_indices = [i for i in I[0] if 0 <= i < len(documents)]
+    
+    return [documents[i] for i in valid_indices]
 
 def generate_john_response(user_input):
     try:
