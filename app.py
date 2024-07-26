@@ -68,12 +68,12 @@ def generate_john_response(user_input):
             {"role": "user", "content": augmented_input}
         ]
         
-        response = client.chat_completions.create(
+        response = client.create_chat_completion(
             model="gpt-3.5-turbo",
             messages=messages
         )
         
-        return response.choices[0].message.content.strip()
+        return response.choices[0].message['content'].strip()
     except Exception as e:
         st.error(f"An error occurred while generating the response: {str(e)}")
         return ""
