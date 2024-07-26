@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-import openai
+from openai import OpenAI
 from sentence_transformers import SentenceTransformer, util
 import faiss
 import numpy as np
