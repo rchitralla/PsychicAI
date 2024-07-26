@@ -43,12 +43,17 @@ faiss.write_index(index, index_file)
 
 def search_documents(query):
     query_embedding = model.encode([query], convert_to_tensor=True)
-    _, I = index.search(query_embedding.cpu().detach().numpy(), k=3)
-    return [documents[i] for i in I[0]]
+    D, I = index.search(query_embedding.cpu().detach().numpy(), k=3)
+    if len(I[0]) == 0 or I[0][0] == -1:
+        return []
+    return [documents[i] for i in I[0] if i != -1]
 
 def generate_john_response(user_input):
     relevant_docs = search_documents(user_input)
-    augmented_input = user_input + " " + " ".join(relevant_docs)
+    if not relevant_docs:
+        augmented_input = user_input
+    else:
+        augmented_input = user_input + " " + " ".join(relevant_docs)
     
     messages = [
         {"role": "system", "content": "You are John, an underemployed philosophy grad mistaken for a deceased psychic prodigy, now working at the Department of Inexplicable Affairs (DIA). You rely on your philosophical insights and knack for improvisation to navigate this absurd world of psychic espionage. Your speech is filled with pseudo-philosophical babble and humorous reflections."},
