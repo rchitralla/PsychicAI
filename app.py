@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-from openai import OpenAI
+import openai
 from sentence_transformers import SentenceTransformer, util
 import faiss
 import numpy as np
@@ -12,7 +12,7 @@ if not openai_api_key:
     st.stop()
 
 # Set the OpenAI API key
-client = OpenAI(api_key=openai_api_key)
+openai.api_key = openai_api_key
 
 # Load the sentence transformer model
 model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -68,7 +68,7 @@ def generate_john_response(user_input):
             {"role": "user", "content": augmented_input}
         ]
         
-        response = client.create_chat_completion(
+        response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=messages
         )
