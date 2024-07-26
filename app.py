@@ -12,7 +12,9 @@ if not openai_api_key:
     st.stop()
 
 # Set the OpenAI API key
-openai.api_key = openai_api_key
+client = OpenAI(
+    api_key = openai_api_key,
+)
 
 # Load the sentence transformer model
 model = SentenceTransformer('all-MiniLM-L6-v2')
