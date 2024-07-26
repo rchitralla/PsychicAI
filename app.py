@@ -68,7 +68,7 @@ def generate_john_response(user_input):
             {"role": "user", "content": augmented_input}
         ]
         
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=messages
         )
