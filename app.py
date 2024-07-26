@@ -44,6 +44,10 @@ faiss.write_index(index, index_file)
 def search_documents(query):
     query_embedding = model.encode([query], convert_to_tensor=True)
     D, I = index.search(query_embedding.cpu().detach().numpy(), k=3)
+    
+    st.write(f"Search distances: {D}")
+    st.write(f"Search indices: {I}")
+    
     # Check if the results are valid
     if len(I) == 0 or len(I[0]) == 0 or I[0][0] == -1:
         return []
@@ -52,6 +56,8 @@ def search_documents(query):
 def generate_john_response(user_input):
     try:
         relevant_docs = search_documents(user_input)
+        st.write(f"Relevant documents: {relevant_docs}")
+        
         if not relevant_docs:
             augmented_input = user_input
         else:
