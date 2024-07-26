@@ -44,28 +44,33 @@ faiss.write_index(index, index_file)
 def search_documents(query):
     query_embedding = model.encode([query], convert_to_tensor=True)
     D, I = index.search(query_embedding.cpu().detach().numpy(), k=3)
-    if len(I[0]) == 0 or I[0][0] == -1:
+    # Check if the results are valid
+    if len(I) == 0 or len(I[0]) == 0 or I[0][0] == -1:
         return []
     return [documents[i] for i in I[0] if i != -1]
 
 def generate_john_response(user_input):
-    relevant_docs = search_documents(user_input)
-    if not relevant_docs:
-        augmented_input = user_input
-    else:
-        augmented_input = user_input + " " + " ".join(relevant_docs)
-    
-    messages = [
-        {"role": "system", "content": "You are John, an underemployed philosophy grad mistaken for a deceased psychic prodigy, now working at the Department of Inexplicable Affairs (DIA). You rely on your philosophical insights and knack for improvisation to navigate this absurd world of psychic espionage. Your speech is filled with pseudo-philosophical babble and humorous reflections."},
-        {"role": "user", "content": augmented_input}
-    ]
-    
-    response = client.chat_completions.create(
-        model="gpt-3.5-turbo",
-        messages=messages
-    )
-    
-    return response.choices[0].message.content.strip()
+    try:
+        relevant_docs = search_documents(user_input)
+        if not relevant_docs:
+            augmented_input = user_input
+        else:
+            augmented_input = user_input + " " + " ".join(relevant_docs)
+        
+        messages = [
+            {"role": "system", "content": "You are John, an underemployed philosophy grad mistaken for a deceased psychic prodigy, now working at the Department of Inexplicable Affairs (DIA). You rely on your philosophical insights and knack for improvisation to navigate this absurd world of psychic espionage. Your speech is filled with pseudo-philosophical babble and humorous reflections."},
+            {"role": "user", "content": augmented_input}
+        ]
+        
+        response = client.chat_completions.create(
+            model="gpt-3.5-turbo",
+            messages=messages
+        )
+        
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        st.error(f"An error occurred while generating the response: {str(e)}")
+        return ""
 
 # Streamlit app
 st.title('Project Stargate: AI Psychic Fortune Teller')
@@ -76,6 +81,7 @@ user_input = st.text_input("Ask John for help:")
 if user_input:
     try:
         john_response = generate_john_response(user_input)
-        st.write(f"**John's response:** {john_response}")
+        if john_response:
+            st.write(f"**John's response:** {john_response}")
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
