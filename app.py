@@ -28,7 +28,7 @@ def generate_john_response(user_input):
 
 # Streamlit app
 st.title('Project Stargate: AI Psychic Fortune Teller')
-video_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"  # Replace with your video URL
+video_url = "Crystall_Ball.mp4"  # Replace with your video URL
 st.video(video_url)
 
 # Get user input
