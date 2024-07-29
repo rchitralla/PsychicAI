@@ -28,6 +28,8 @@ def generate_john_response(user_input):
 
 # Streamlit app
 st.title('Project Stargate: AI Psychic Fortune Teller')
+video_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"  # Replace with your video URL
+st.video(video_url)
 
 # Get user input
 user_input = st.text_input("Ask John for help:")
