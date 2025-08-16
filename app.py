@@ -31,13 +31,13 @@ if not api_key:
 
 client = OpenAI(api_key=api_key)
 
-# ---------- Helpers: Rate-limit handling ----------
+# ---------- Helpers: Rate-limit / transient handling ----------
 def is_retryable_error(e: Exception) -> bool:
     s = str(e).lower()
     retry_markers = [
         "rate limit", "429", "rpm", "tpm", "overloaded", "temporarily unavailable",
         "timeout", "timed out", "gateway", "server error", "connection aborted",
-        "capacity", "unavailable"
+        "capacity", "unavailable", "bad gateway"
     ]
     return any(m in s for m in retry_markers)
 
@@ -45,29 +45,6 @@ def backoff_sleep(attempt: int, base: float = 1.0, cap: float = 8.0) -> None:
     # Exponential backoff with full jitter
     delay = min(cap, base * (2 ** attempt)) + random.random()
     time.sleep(delay)
-
-def call_responses_with_retries(client: OpenAI, payload: dict, models: List[str], retries_per_model: int = 3):
-    """
-    Try each model in order. For each model, retry on transient errors.
-    `payload` must NOT include 'model'; it is set here.
-    Returns the response on success; raises the last error otherwise.
-    """
-    last_err = None
-    for model in models:
-        for attempt in range(retries_per_model):
-            try:
-                resp = client.responses.create(model=model, **payload)
-                # Attach chosen model for diagnostics
-                setattr(resp, "_chosen_model", model)
-                return resp
-            except Exception as e:
-                last_err = e
-                if is_retryable_error(e) and attempt < retries_per_model - 1:
-                    backoff_sleep(attempt)
-                    continue
-                else:
-                    break  # move to next model
-    raise last_err
 
 # ---------- Streamlit double-fire guard ----------
 def should_fire_request(user_input: str) -> bool:
@@ -105,40 +82,72 @@ def build_messages(history: List[Dict[str, str]], user_input: str) -> List[Dict]
     })
     return msgs
 
+def supports_sampling(model_name: str) -> bool:
+    """
+    Returns True for GPT-family models that accept temperature/seed (e.g., gpt-4o-mini, gpt-5-mini).
+    Returns False for o-series reasoning models (e.g., o3-mini, o1), which reject those params.
+    """
+    return model_name.startswith("gpt-")
+
 def generate_john_response_safe(
     user_input: str,
     history: Optional[List[Dict[str, str]]] = None,
     temperature: float = 0.6,
     seed: Optional[int] = None,
     models: Optional[List[str]] = None,
+    retries_per_model: int = 3,
 ):
+    """
+    Iterates through models in order, applies conditional params, and retries transient failures with backoff.
+    Returns the response text on success or raises the last error.
+    """
     history = history or []
     models = models or PREFERRED_MODELS_DEFAULT
+    msgs = build_messages(history, user_input)
+    base_payload = dict(instructions=john_system_prompt(), input=msgs)
 
-    payload = dict(
-        instructions=john_system_prompt(),
-        input=build_messages(history, user_input),
-        temperature=float(temperature),
-        **({"seed": int(seed)} if seed is not None else {}),
-    )
+    last_err = None
+    for model in models:
+        for attempt in range(retries_per_model):
+            try:
+                # Copy the base payload and conditionally add sampling params
+                payload = dict(base_payload)
+                if supports_sampling(model):
+                    payload.update(
+                        temperature=float(temperature),
+                        **({"seed": int(seed)} if seed is not None else {}),
+                    )
+                # Call the Responses API
+                resp = client.responses.create(model=model, **payload)
+                # Attach chosen model for diagnostics
+                setattr(resp, "_chosen_model", model)
 
-    resp = call_responses_with_retries(client, payload, models=models, retries_per_model=3)
+                # Optional diagnostics display
+                try:
+                    served_by = getattr(resp, "_chosen_model", None) or getattr(resp, "model", None)
+                    usage = getattr(resp, "usage", None)
+                    with st.expander("Diagnostics", expanded=False):
+                        st.write(f"Model: {served_by}")
+                        if usage:
+                            in_toks = getattr(usage, "input_tokens", None)
+                            out_toks = getattr(usage, "output_tokens", None)
+                            if in_toks is not None and out_toks is not None:
+                                st.write(f"Tokens — in: {in_toks}, out: {out_toks}")
+                except Exception:
+                    pass
 
-    # Optional diagnostics display
-    try:
-        served_by = getattr(resp, "_chosen_model", None) or getattr(resp, "model", None)
-        usage = getattr(resp, "usage", None)
-        with st.expander("Diagnostics", expanded=False):
-            st.write(f"Model: {served_by}")
-            if usage:
-                in_toks = getattr(usage, "input_tokens", None)
-                out_toks = getattr(usage, "output_tokens", None)
-                if in_toks is not None and out_toks is not None:
-                    st.write(f"Tokens — in: {in_toks}, out: {out_toks}")
-    except Exception:
-        pass
+                return resp.output_text.strip()
 
-    return resp.output_text.strip()
+            except Exception as e:
+                last_err = e
+                # If it's retryable, backoff and retry same model; otherwise jump to next model
+                if is_retryable_error(e) and attempt < retries_per_model - 1:
+                    backoff_sleep(attempt)
+                    continue
+                else:
+                    break  # move to next model
+    # Exhausted all models/attempts
+    raise last_err if last_err else RuntimeError("Unknown error with no exception raised.")
 
 # ---------- UI ----------
 st.set_page_config(page_title=APP_TITLE, page_icon="🔮", layout="centered")
@@ -147,7 +156,7 @@ st.caption("“John” is on the clock. The DIA just doesn’t know it.")
 st.video(YOUTUBE_URL)
 
 with st.expander("Model & generation settings", expanded=False):
-    # Let user reorder or tweak fallback list (left to right is priority)
+    # Let user tweak fallback list (left→right is priority)
     editable_models = st.text_input(
         "Model fallback list (comma-separated, left→right priority)",
         value=",".join(PREFERRED_MODELS_DEFAULT),
@@ -155,8 +164,12 @@ with st.expander("Model & generation settings", expanded=False):
     )
     models = [m.strip() for m in editable_models.split(",") if m.strip()]
 
-    temperature = st.slider("Creativity (temperature)", 0.0, 1.2, 0.6, 0.05)
-    use_seed = st.checkbox("Reproducible output (seed)", value=False)
+    temperature = st.slider(
+        "Creativity (temperature)",
+        0.0, 1.2, 0.6, 0.05,
+        help="Used only for GPT-family models (gpt-*). Ignored for o-series (o*).",
+    )
+    use_seed = st.checkbox("Reproducible output (seed)", value=False, help="Used only for gpt-* models.")
     seed_val = st.number_input("Seed (integer)", value=7, step=1) if use_seed else None
 
 # Session state: simple chat history
