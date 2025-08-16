@@ -16,6 +16,42 @@ from typing import List, Dict, Optional
 import streamlit as st
 from openai import OpenAI
 
+import random
+
+OPENERS = [
+    "Mm. Right. Okay, bold of you to ask.",
+    "Ah, a question. I’ll pretend I didn’t hear it.",
+    "Hold on, the stapler is humming again.",
+    "Let me consult the coffee grounds. They’re unionized."
+]
+
+OBJECTS = ["stapler", "security badge", "microwave", "punch clock", "potted fern", "overhead projector"]
+FORMS = ["Form 17-B (Existential Risk Waiver)", "Memo 404: Meaning Not Found", "Form XR-12 (Metaphysical Leave)"]
+PHILOS = ["Kierkegaard", "Kant", "Diogenes", "Nietzsche", "Simone Weil", "Zhuangzi"]
+EXIT_QUIPS = [
+    "If this helps, I apologize.", 
+    "Proceed with theatrical uncertainty.",
+    "This message will self-doubt in five seconds.",
+    "That’s my final uncertainty."
+]
+
+def dynamic_style_bits() -> str:
+    # Randomly sample beats so each reply feels new
+    opener = random.choice(OPENERS)
+    obj = random.choice(OBJECTS)
+    form = random.choice(FORMS)
+    philo = random.choice(PHILOS)
+    exit_quip = random.choice(EXIT_QUIPS)
+    return (
+        f"STYLE BITS THIS TURN:\n"
+        f"- Use this cold open vibe (rephrase it, do not copy verbatim): {opener}\n"
+        f"- Misfire on a vision involving a {obj}.\n"
+        f"- Name-drop {philo} incorrectly.\n"
+        f"- Cite a fake rule or form like: {form}.\n"
+        f"- End with a short exit quip in that spirit: {exit_quip}\n"
+        f"- IMPORTANT: paraphrase everything above; do not reuse exact wording."
+    )
+
 # ---------- App Config ----------
 APP_TITLE = "Project STARGATE: AI Psychic Fortune Teller"
 YOUTUBE_URL = "https://www.youtube.com/watch?v=rZsMSyfEiY0"
@@ -131,8 +167,11 @@ def generate_john_response_safe(
     history = history or []
     models = models or PREFERRED_MODELS_DEFAULT
     msgs = build_messages(history, user_input)
-    base_payload = dict(instructions=john_system_prompt(), input=msgs)
-
+    style_bits = dynamic_style_bits()
+    base_payload = dict(
+    instructions=john_system_prompt() + "\n\n" + style_bits,
+    input=msgs
+)
     last_err = None
     for model in models:
         for attempt in range(retries_per_model):
