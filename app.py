@@ -39,33 +39,28 @@ def john_system_prompt() -> str:
         "• If the user asks for something unsafe or illegal, refuse politely and redirect to a safer alternative.\n"
     )
 
-def build_conversation(history: List[Dict[str, str]], user_input: str) -> List[Dict[str, Any]]:
-    """
-    Convert our chat history + new user message into Responses API 'input' format.
-    """
-    messages: List[Dict[str, Any]] = [
-        {"role": "system", "content": [{"type": "text", "text": john_system_prompt()}]}
-    ]
+def build_messages(history, user_input):
+    msgs = []
     for turn in history:
-        messages.append({"role": turn["role"], "content": [{"type": "text", "text": turn["content"]}]})
-    messages.append({"role": "user", "content": [{"type": "text", "text": user_input}]})
-    return messages
+        msgs.append({
+            "role": turn["role"],  # "user" or "assistant"
+            "content": [{"type": "input_text", "text": turn["content"]}],
+        })
+    msgs.append({
+        "role": "user",
+        "content": [{"type": "input_text", "text": user_input}],
+    })
+    return msgs
 
-def generate_john_response(
-    user_input: str,
-    history: List[Dict[str, str]],
-    model: str,
-    temperature: float,
-    seed: int | None,
-) -> str:
-    messages = build_conversation(history, user_input)
-
-    # Note: Responses API returns .output_text in the Python SDK.
+def generate_john_response(user_input, history=None):
+    history = history or []
     resp = client.responses.create(
-        model=model,
-        input=messages,
-        temperature=temperature,
-        **({"seed": seed} if seed is not None else {}),
+        model="gpt-4o-mini",
+        instructions=(
+            "You are John — witty, helpful, concise. Philosophy-flavored advice; jokes never block clarity."
+        ),
+        input=build_messages(history, user_input),
+        temperature=0.6,
     )
     return resp.output_text.strip()
 
