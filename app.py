@@ -83,20 +83,31 @@ def john_system_prompt() -> str:
         "• Exit quip: a one-liner that undercuts the whole thing.\n"
     )
 
-def build_messages(history: List[Dict[str, str]], user_input: str) -> List[Dict]:
+def _content_type_for_role(role: str) -> str:
+    # Responses API requires input_text for user, output_text/refusal for assistant
+    return "input_text" if role == "user" else "output_text"
+
+def build_messages(history: List[Dict[str, str]], user_input: str, prefix_msgs: Optional[List[Dict]] = None) -> List[Dict]:
     msgs: List[Dict] = []
+    if prefix_msgs:
+        msgs.extend(prefix_msgs)  # already well-typed (see FEW_SHOTS below)
+
+    # Replay history with correct content types per role
     for turn in history:
         role = turn.get("role", "user")
         content = turn.get("content", "")
         msgs.append({
             "role": role,  # "user" or "assistant"
-            "content": [{"type": "input_text", "text": content}],
+            "content": [{ "type": _content_type_for_role(role), "text": content }],
         })
+
+    # Current user input
     msgs.append({
         "role": "user",
-        "content": [{"type": "input_text", "text": user_input}],
+        "content": [{ "type": "input_text", "text": user_input }],
     })
     return msgs
+
 
 def supports_sampling(model_name: str) -> bool:
     """
